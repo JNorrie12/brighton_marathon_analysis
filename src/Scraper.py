@@ -13,6 +13,8 @@ import pandas as pd
 
 class Scraper:
 
+    columns = ['bib_number', 'name', 'finish_time' ,'hyper_link']
+
     @staticmethod
     def __setup_driver() -> webdriver:
         """
@@ -32,17 +34,15 @@ class Scraper:
     def __init__(self):
         self.driver = self.__setup_driver()
 
-    def __load_and_parse_page(self, url: str) -> BeautifulSoup:
+    def __load_and_parse_page(self, url: str, test_section: str = 'section.section-main' ) -> BeautifulSoup:
         """ 
         Loads and parses the page of the url 
         """
         
         self.driver.get(url)
     
-        # Wait for the page to load
         WebDriverWait(self.driver, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'section.section-main'))
-            #EC.presence_of_element_located((By.CSS_SELECTOR, 'ul.list-group.list-group-multicolumn'))
+            EC.presence_of_element_located((By.CSS_SELECTOR, test_section))
         )
     
         return BeautifulSoup(self.driver.page_source, 'html.parser')
@@ -55,8 +55,6 @@ class Scraper:
         """
 
         soup = self.__load_and_parse_page(url)
-
-        columns = ['bib_number', 'name', 'finish_time' ,'hyper_link']
 
         runner_data = pd.DataFrame()
 
@@ -85,6 +83,17 @@ class Scraper:
 
         soup = self.__load_and_parse_page(url)
 
-        table = soup.select_one('table.table.table-condensed.table-striped')
+        #use a try block since not everyone turned up and has split times associated.
+        try:
+            #retrieve split times table
+            table = soup.select_one('table.table.table-condensed.table-striped')
+            result = pd.read_html(StringIO(str(table)))[0]
 
-        return pd.read_html(StringIO(str(table)))[0]
+            #add charity name
+            charity = soup.select_one('table.table.table-condensed').find("tr" , { "class" : "f-company"}).text.replace('Charity', '').strip()
+            result['charity'] = charity
+
+        except:
+            return pd.DataFrame()
+
+        return result
