@@ -1,4 +1,4 @@
-# grighton_marathon_analysis
+# Brighton Marathon Scraping and Analysis
 I ran the Birghton Marathon this year. I created these Repo to do some data analysis.
 
 - brighton_marathon_scraper.ipynb scraper for the Brighton Marathon website
